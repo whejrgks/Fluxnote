@@ -2,30 +2,48 @@ import React, { useState, useEffect } from 'react';
 import NoteList from './components/NoteList';
 import NoteEditor from './components/NoteEditor';
 import SearchBar from './components/SearchBar';
+import Auth from './components/Auth';
+import { getCurrentUser, logout as logoutService } from './services/authService';
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [notes, setNotes] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // 사용자 인증 상태 확인
+  useEffect(() => {
+    const checkAuth = async () => {
+      const result = await getCurrentUser();
+      if (result.success) {
+        setUser(result.user);
+      }
+      setLoading(false);
+    };
+    checkAuth();
+  }, []);
+
   // localStorage에서 노트 불러오기
   useEffect(() => {
-    const savedNotes = localStorage.getItem('fluxnote-notes');
-    if (savedNotes) {
-      try {
-        setNotes(JSON.parse(savedNotes));
-      } catch (error) {
-        console.error('Failed to load notes:', error);
+    if (user) {
+      const savedNotes = localStorage.getItem(`fluxnote-notes-${user.id}`);
+      if (savedNotes) {
+        try {
+          setNotes(JSON.parse(savedNotes));
+        } catch (error) {
+          console.error('Failed to load notes:', error);
+        }
       }
     }
-  }, []);
+  }, [user]);
 
   // 노트가 변경될 때마다 localStorage에 저장
   useEffect(() => {
-    if (notes.length > 0 || localStorage.getItem('fluxnote-notes')) {
-      localStorage.setItem('fluxnote-notes', JSON.stringify(notes));
+    if (user && (notes.length > 0 || localStorage.getItem(`fluxnote-notes-${user.id}`))) {
+      localStorage.setItem(`fluxnote-notes-${user.id}`, JSON.stringify(notes));
     }
-  }, [notes]);
+  }, [notes, user]);
 
   // 검색 필터링된 노트
   const filteredNotes = notes.filter(note => {
@@ -75,6 +93,38 @@ function App() {
     setSelectedNote(note);
   };
 
+  // 인증 성공 핸들러
+  const handleAuthSuccess = (userData) => {
+    setUser(userData);
+  };
+
+  // 로그아웃 핸들러
+  const handleLogout = async () => {
+    if (window.confirm('로그아웃하시겠습니까?')) {
+      await logoutService();
+      setUser(null);
+      setNotes([]);
+      setSelectedNote(null);
+    }
+  };
+
+  // 로딩 중
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100">
+        <div className="text-center">
+          <div className="text-6xl mb-4">📝</div>
+          <p className="text-xl text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 인증되지 않은 경우
+  if (!user) {
+    return <Auth onAuthSuccess={handleAuthSuccess} />;
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <header className="bg-white shadow-md sticky top-0 z-50">
@@ -82,12 +132,23 @@ function App() {
           <h1 className="text-2xl md:text-3xl font-bold text-primary-500">
             📝 FluxNote
           </h1>
-          <button 
-            className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 md:py-3 md:px-6 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
-            onClick={handleCreateNote}
-          >
-            + 새 노트
-          </button>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-gray-600 hidden md:block">
+              {user.username}님
+            </span>
+            <button 
+              className="bg-primary-500 hover:bg-primary-600 text-white font-semibold py-2 px-4 md:py-3 md:px-6 rounded-lg shadow-lg transition-all duration-300 hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0"
+              onClick={handleCreateNote}
+            >
+              + 새 노트
+            </button>
+            <button 
+              className="bg-gray-500 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-lg transition-all duration-300"
+              onClick={handleLogout}
+            >
+              로그아웃
+            </button>
+          </div>
         </div>
       </header>
 
