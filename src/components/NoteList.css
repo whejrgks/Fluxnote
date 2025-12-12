@@ -1,0 +1,13 @@
+/* NoteList styles are now handled by Bootstrap classes */
+/* Additional custom styles if needed */
+.note-item .btn-link:hover {
+  transform: scale(1.1);
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .note-list .card-body {
+    padding: 0.75rem !important;
+  }
+}
+

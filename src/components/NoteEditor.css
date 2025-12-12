@@ -1,0 +1,35 @@
+.note-editor input:focus,
+.note-editor textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.note-editor input::placeholder,
+.note-editor textarea::placeholder {
+  color: #ccc;
+}
+
+/* 모바일 최적화 */
+@media (max-width: 768px) {
+  .note-editor input {
+    font-size: 1.5rem !important;
+  }
+
+  .note-editor textarea {
+    font-size: 1rem !important;
+    line-height: 1.6 !important;
+    min-height: 300px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .note-editor input {
+    font-size: 1.3rem !important;
+  }
+
+  .note-editor textarea {
+    font-size: 0.95rem !important;
+    padding: 0.75rem !important;
+  }
+}
+
